@@ -185,6 +185,18 @@ namespace Subscrio.Client
             }
         }
 
+        public void SubscriptionRemoved(SubscriberModel model)
+        {
+            EnsureStorageMethod();
+            if (model != null)
+            {
+                StorageMethod.SubscriberRemoved(model);
+
+                _cache.Remove(_cacheKey + model.Key);
+                _cache.Remove(_cacheAppId + model.ApplicationId);
+            }
+        }
+
         public Configuration GetConfiguration()
         {
             EnsureStorageMethod();

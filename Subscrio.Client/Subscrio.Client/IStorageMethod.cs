@@ -8,6 +8,7 @@ namespace Subscrio.Client
         SubscriberModel GetByKey(string key);
         SubscriberModel GetByApplicationId(string appId);
         void AddOrUpdateSubscriber(SubscriberModel model);
+        void SubscriberRemoved(SubscriberModel model);
         void UpdateConfiguration(Configuration config);
         void AddOrUpdateSubscribers(List<SubscriberModel> subscribers);
         Configuration GetConfiguration();

@@ -56,6 +56,17 @@ namespace Subscrio.Client.Redis
             _database.HashSet(SUBSCRIO_ALL_KEY, GetRedisKeyForKey(model.Key), stringModel);
         }
 
+        public void SubscriberRemoved(SubscriberModel model)
+        {
+            var stringModel = JsonConvert.SerializeObject(model);
+            // set expiration to 1 second, anything lower than that seems to throw an exception
+            var expiration = new TimeSpan(10000000);
+            _database.StringSet(GetRedisKeyForAppId(model.ApplicationId), stringModel, expiration);
+            _database.StringSet(GetRedisKeyForKey(model.Key), stringModel, expiration);
+            // expire the get all subscribers call
+            _database.StringSet(HASH_EXPIRATION, DateTime.UtcNow.Ticks);
+        }
+
         public void UpdateConfiguration(Configuration config)
         {
             var stringModel = JsonConvert.SerializeObject(config);
