@@ -59,7 +59,9 @@ namespace Subscrio.Client.Redis
         public void UpdateConfiguration(Configuration config)
         {
             var stringModel = JsonConvert.SerializeObject(config);
-            _database.StringSetAsync(SUBSCRIO_CONFIG_KEY, stringModel);
+            var expirationTicks = config?.Company?.CacheTimeoutTicks;
+            var expiration = expirationTicks != null ? new TimeSpan?(new TimeSpan(expirationTicks.Value)) : null;
+            _database.StringSet(SUBSCRIO_CONFIG_KEY, stringModel, expiration);
         }
 
         public void AddOrUpdateSubscribers(List<SubscriberModel> subscribers)
