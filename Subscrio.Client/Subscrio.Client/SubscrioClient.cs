@@ -235,6 +235,8 @@ namespace Subscrio.Client
             dic.Add("ApplicationId", subscriber.ApplicationId);
             dic.Add("Key", subscriber.Key);
             dic.Add("ExpirationDate", subscriber.ExpirationDate);
+            dic.Add("BillingSystemIdentifier", subscriber.BillingSystemIdentifier);
+            dic.Add("BillingSystemType", subscriber.BillingSystemType);
             dic.Add("IsExpired", !subscriber.DefaultNeverExpire && (subscriber.ExpirationDate.AddDays(subscriber.DefaultGracePeriod) < DateTime.UtcNow));
             return new DynamicDictionary(dic);
         }
