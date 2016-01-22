@@ -9,8 +9,8 @@ namespace SubscriptionApp.Client.Models
         {
             Features = new List<FeatureModel>();
         }
-        public int Id { get; set; }
-        public int SubscriptionTypeId { get; set; }
+        public long Id { get; set; }
+        public long SubscriptionTypeId { get; set; }
         public int BillingSystemType { get; set; }
         public string BillingSystemIdentifier { get; set; }
         public int CompanyId { get; set; }

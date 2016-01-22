@@ -56,6 +56,42 @@ namespace SubscriptionApp.Client.Test
         }
 
         [Test]
+        public void ShouldCreatePropertiesBasedUponFeaturesForStronglyTypedModel()
+        {
+            _mockService.Setup(x => x.GetSubscriptionByKey(It.IsAny<string>())).Returns(SUSBCRIBER_JSON);
+            _client = new SubscriptionClient(_mockService.Object).UseRedis("localhost");
+            var result = _client.GetSubscriptionByKey<TestClass>("Tuttle");
+            Assert.AreEqual(true, result.RoutingEnabled);
+            Assert.AreEqual(44.44m, result.DailyRate);
+            Assert.AreEqual(222, result.EnterpriseChatLimit);
+            Assert.AreEqual("the name", result.PlanName);
+            Assert.AreEqual(2015, result.NewVersionDate.Year);
+            Assert.AreEqual(9, result.NewVersionDate.Month);
+            Assert.AreEqual(4, result.NewVersionDate.Day);
+            Assert.AreEqual(1, result.SubscriptionTypeId);
+            Assert.AreEqual("Tuttle", result.Name);
+            Assert.AreEqual(false, result.IsExpired);
+        }
+
+        [Test]
+        public void ShouldUpdateLocalModelForStronglyTypedModelOrDynamic()
+        {
+            _mockService.Setup(x => x.GetSubscriptionByKey(It.IsAny<string>())).Returns(SUSBCRIBER_JSON);
+            _client = new SubscriptionClient(_mockService.Object).UseRedis("localhost");
+            var result = _client.GetSubscriptionByKey<TestClass>("Tuttle");
+            result.PlanName = "Steeeeeeeve";
+            _client.UpdateLocalSubscription(result);
+            result = _client.GetSubscriptionByKey<TestClass>("Tuttle");
+            Assert.AreEqual("Steeeeeeeve", result.PlanName);
+
+            var dynamicResult = _client.GetSubscriptionByKey("Tuttle");
+            dynamicResult.PlanName = "Tuttle";
+            _client.UpdateLocalSubscription(dynamicResult);
+            result = _client.GetSubscriptionByKey<TestClass>("Tuttle");
+            Assert.AreEqual("Tuttle", result.PlanName);
+        }
+
+        [Test]
         public void ShouldReturnNullForFeaturesThatAreNull()
         {
             _mockService.Setup(x => x.GetSubscriptionByKey(It.IsAny<string>())).Returns(SUSBCRIBER_JSON_NULL);
@@ -141,11 +177,11 @@ namespace SubscriptionApp.Client.Test
             _client = new SubscriptionClient(_mockService.Object).UseRedis("localhost");
             try
             {
-                _client.UpdateSubscription((new TestFeatures(new Dictionary<string, object> { { "Key", "Tuttle" } })));
+                _client.UpdateSubscription((new TestFeatures(new Dictionary<string, object> { { "Key", "asdlfhasdklfahsdl" } })));
             }
             catch (Exception ex)
             {
-                Assert.AreEqual("Cannot update subscription, original subscribption not found", ex.Message);
+                Assert.AreEqual("Cannot update subscription, original subscription not found", ex.Message);
             }
         }
     }
@@ -154,7 +190,36 @@ namespace SubscriptionApp.Client.Test
     {
         public TestFeatures(Dictionary<string, object> dictionary) : base(dictionary)
         {
+
+            dictionary.Add("SubscriptionTypeId", null);
+            dictionary.Add("Id", null);
+            dictionary.Add("Name", null);
+            dictionary.Add("ApplicationId", null);
+            dictionary.Add("ExpirationDate", null);
+            dictionary.Add("BillingSystemIdentifier", null);
+            dictionary.Add("BillingSystemType", null);
+            dictionary.Add("IsExpired",null);
         }
+    }
+
+    public class TestClass : ISubscriber
+    {
+        public long SubscriptionTypeId { get; set; }
+        public long Id { get; set; }
+        public string Name { get; set; }
+        public string ApplicationId { get; set; }
+        public string Key { get; set; }
+        public DateTime ExpirationDate { get; set; }
+        public string BillingSystemIdentifier { get; set; }
+        public int BillingSystemType { get; set; }
+        public bool IsExpired { get; }
+
+        public bool RoutingEnabled { get; set; }
+        public decimal DailyRate { get; set; }
+        public int EnterpriseChatLimit { get; set; }
+        public string PlanName { get; set; }
+        public DateTime NewVersionDate { get; set; }
+
     }
 
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Newtonsoft.Json;
 using SubscriptionApp.Client.Models;
 using SubscriptionApp.Client.Services;
@@ -58,6 +59,11 @@ namespace SubscriptionApp.Client
             return subscriber.ToDynamic();
         }
 
+        public T GetSubscriptionByKey<T>(string key) where T : ISubscriber
+        {
+            return (GetSubscriptionByKey(key) as DynamicDictionary).As<T>();
+        }
+
         public List<dynamic> GetSubscriptions()
         {
             var subscribers = StorageMethod.GetAllSubscriptions();
@@ -67,11 +73,16 @@ namespace SubscriptionApp.Client
             subscribers = JsonConvert.DeserializeObject<List<SubscriberModel>>(_webClientService.GetSubscriptions());
             if (subscribers == null) return null;
             StorageMethod.AddOrUpdateSubscribers(subscribers);
-
+        
             return subscribers.ToDynamics();
         }
 
-        private SubscriberModel GetSubscriberModelByKey(string key)
+        public List<T> GetSubscriptions<T>() where T : ISubscriber
+        {
+            return GetSubscriptions().Select(x => (x as DynamicDictionary).As<T>()).ToList();
+        }
+
+        private dynamic GetSubscriberModelByKey(string key)
         {
             var subscriber = _cache.Get(_cacheKey + key) as SubscriberModel;
             if (subscriber != null) return subscriber;
@@ -113,6 +124,11 @@ namespace SubscriptionApp.Client
             return subscriber.ToDynamic();
         }
 
+        public T GetSubscriptionByApplicationId<T>(string applicationId) where T : IStorageMethod
+        {
+            return (GetSubscriptionByApplicationId(applicationId) as DynamicDictionary).As<T>();
+        }
+
         public dynamic CreateSubscription(int subscriptionTypeId, string applicationIdentifier, string name = null, int? billingSystemType = null, string billingSystemIdentifier = null)
         {
             var config = GetConfiguration();
@@ -152,6 +168,15 @@ namespace SubscriptionApp.Client
             return newSubscriber.ToDynamic();
         }
 
+        public T CreateSubscription<T>(int subscriptionTypeId, string applicationIdentifier, string name = null,
+            int? billingSystemType = null, string billingSystemIdentifier = null) where T : IStorageMethod
+        {
+            return (CreateSubscription(subscriptionTypeId,applicationIdentifier,name,billingSystemType,billingSystemIdentifier) as DynamicDictionary).As<T>();
+        }
+
+
+
+
         public dynamic UpdateSubscription(dynamic subscriber)
         {
             var originalSubscriber = GetSubscriberModelByKey(subscriber.Key);
@@ -172,7 +197,12 @@ namespace SubscriptionApp.Client
             return null;
         }
 
-        public void UpdateLocalSubscription(dynamic subscriber)
+        public T UpdateSusbcription<T>(T subscriber) where T : ISubscriber
+        {
+            return (UpdateSubscription(subscriber) as DynamicDictionary).As<T>();
+        }
+
+        public void UpdateLocalSubscription<T>(T subscriber) where T: ISubscriber
         {
             var originalSubscriber = GetSubscriberModelByKey(subscriber.Key);
             var model = Extensions.AsSubscriberModel(subscriber, originalSubscriber);
@@ -183,7 +213,6 @@ namespace SubscriptionApp.Client
 
             _cache.Add(_cacheAppId + model.ApplicationId, model, MyCachePriority.Default);
             _cache.Add(_cacheKey + model.Key, model, MyCachePriority.Default);
-
         }
 
         public void SubscriptionUpdated(SubscriberModel model)
@@ -278,29 +307,56 @@ namespace SubscriptionApp.Client
             return subscribers.Select(subscriberModel => subscriberModel.ToDynamic()).ToList();
         }
 
-        public static SubscriberModel AsSubscriberModel(dynamic dynamic, SubscriberModel subscriber)
+        public static SubscriberModel AsSubscriberModel<T>(T dynamic, SubscriberModel subscriber) where T : ISubscriber
         {
-            if (subscriber == null) throw new Exception("Cannot update subscription, original subscribption not found");
+            if (subscriber == null) throw new Exception("Cannot update subscription, original subscription not found");
             if (dynamic == null) throw new ArgumentNullException(nameof(dynamic));
             var subscriberProps = subscriber.GetType().GetProperties();
-            foreach (var property in dynamic.GetDynamicMemberNames())
+            if (dynamic.GetType().GetMethod("GetDynamicMemberNames") != null)
             {
-                if (subscriberProps.All(sp => property != sp.Name))
+                var castedDynamic = dynamic as DynamicDictionary;
+                if (castedDynamic == null) return null;
+                foreach (var property in castedDynamic.GetDynamicMemberNames())
                 {
-                    var feature = subscriber.Features.FirstOrDefault(x => x.PropertyName == property);
-                    if (feature == null) continue;
-                    feature.Value = dynamic.GetMemberValue(property)?.ToString();
-                }
-                else
-                {
-                    var subscriberProp = subscriberProps.FirstOrDefault(x => x.Name == property);
-                    subscriberProp?.SetValue(subscriber, dynamic.GetMemberValue(property));
+                    if (subscriberProps.All(sp => property != sp.Name))
+                    {
+                        var feature = subscriber.Features.FirstOrDefault(x => x.PropertyName == property);
+                        if (feature == null) continue;
+                        feature.Value = castedDynamic.GetMemberValue(feature.PropertyName).ToString();
+                    }
+                    else
+                    {
+                        var subscriberProp = subscriberProps.FirstOrDefault(x => x.Name == property);
+                        if (subscriberProp == null) continue;
+                        var val = castedDynamic.GetMemberValue(subscriberProp.Name);
+                        subscriberProp.SetValue(subscriber, val);
+                    }
                 }
             }
+            else
+            {
+                foreach (var property in dynamic.GetType().GetProperties())
+                {
+                    if (subscriberProps.All(sp => property.Name != sp.Name))
+                    {
+                        var feature = subscriber.Features.FirstOrDefault(x => x.PropertyName == property.Name);
+                        if (feature == null) continue;
+                        feature.Value = property.GetValue(dynamic).ToString();
+                    }
+                    else
+                    {
+                        var subscriberProp = subscriberProps.FirstOrDefault(x => x.Name == property.Name);
+                        if (subscriberProp == null) continue;
+                        var val = property.GetValue(dynamic);
+                        subscriberProp.SetValue(subscriber, val);
+                    }
+                }
+            }
+            
             return subscriber;
         }
 
-        public static T As<T>(this DynamicDictionary dynamic)
+        public static T As<T>(this object dynamic)
         {
             return JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(dynamic));
         }
