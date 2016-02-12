@@ -254,13 +254,36 @@ namespace SubscriptionApp.Client
                 SubscriptionRemoved(model);
             }
 
-            if (subscriberWebhookModel.Action == "config")
+            if (subscriberWebhookModel.Action == "config" || subscriberWebhookModel.Action == "updateall")
             {
                 var config = JsonConvert.DeserializeObject<Configuration>(_webClientService.GetConfiguration());
                 if (config != null)
                 {
                     StorageMethod.UpdateConfiguration(config);
                     _cache.Add(_configCacheKey, config, MyCachePriority.Default);
+                }
+            }
+
+            if (subscriberWebhookModel.Action == "updateall")
+            {
+                var subscribers = JsonConvert.DeserializeObject<List<SubscriberModel>>(_webClientService.GetSubscriptions());
+                if (subscribers != null)
+                {
+                    var currentSubscriberIds = subscribers.Select(x => x.Id).ToList();
+                    var previousSubscribers = StorageMethod.GetAllSubscriptions() ?? new List<SubscriberModel>();
+                    var removed = previousSubscribers.Where(x => !currentSubscriberIds.Contains(x.Id));
+                    foreach (var subscriberModel in removed)
+                    {
+                        StorageMethod.SubscriberRemoved(subscriberModel);
+                        _cache.Remove(_cacheKey + subscriberModel.Key);
+                        _cache.Remove(_cacheAppId + subscriberModel.ApplicationId);
+                    }
+                    StorageMethod.AddOrUpdateSubscribers(subscribers);
+                    foreach (var subscriberModel in subscribers)
+                    {
+                        _cache.Add(_cacheKey + subscriberModel.Key, subscriberModel, MyCachePriority.Default);
+                        _cache.Add(_cacheAppId + subscriberModel.ApplicationId, subscriberModel, MyCachePriority.Default);
+                    }
                 }
             }
         }

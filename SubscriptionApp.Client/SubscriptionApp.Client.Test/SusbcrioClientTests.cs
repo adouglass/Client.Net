@@ -184,6 +184,18 @@ namespace SubscriptionApp.Client.Test
                 Assert.AreEqual("Cannot update subscription, original subscription not found", ex.Message);
             }
         }
+
+        [Test]
+        public void ShouldRemoveSubscribersOnUpdateAll()
+        {
+            _mockService.Setup(x => x.GetSubscriptions()).Returns(SUSBCRIBERS_JSON);
+            _client = new SubscriptionClient(_mockService.Object).UseRedis("localhost");
+            _client.SubscriptionUpdated(new SubscriberModel {ApplicationId = "1234", Key = "5678"});
+            _client.WebhookUpdate(new SubscriberWebhookModel {Action = "updateall"});
+            System.Threading.Thread.Sleep(1000);
+            var result = _client.GetSubscriptionByKey("5678");
+            Assert.IsNull(result);
+        }
     }
 
     public class TestFeatures: DynamicDictionary
