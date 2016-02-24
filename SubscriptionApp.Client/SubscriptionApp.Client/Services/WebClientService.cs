@@ -39,9 +39,9 @@ namespace SubscriptionApp.Client.Services
                 {
                     return wc.DownloadString(Endpoint + GET_SUBSCRIPTIONS);
                 }
-                catch (Exception ex)
+                catch (WebException ex)
                 {
-                    return string.Empty;
+                    return wc.DownloadString(Endpoint + GET_SUBSCRIPTIONS);
                 }
             }
         }
@@ -56,9 +56,9 @@ namespace SubscriptionApp.Client.Services
                 {
                     return wc.DownloadString(Endpoint + GET_CONFIGURATION);
                 }
-                catch (Exception ex)
+                catch (WebException ex)
                 {
-                    return string.Empty;
+                    return wc.DownloadString(Endpoint + GET_CONFIGURATION);
                 }
             }
         }
@@ -73,9 +73,14 @@ namespace SubscriptionApp.Client.Services
                 {
                     return wc.DownloadString(Endpoint + GET_SUBSCRIPTION_BYKEY + "/" + key);
                 }
-                catch (Exception ex)
+                catch (WebException ex)
                 {
-                    return string.Empty;
+                    var webResponse = (HttpWebResponse)ex.Response;
+                    if (webResponse.StatusCode == HttpStatusCode.NotFound)
+                    {
+                        return string.Empty;
+                    }
+                    return wc.DownloadString(Endpoint + GET_SUBSCRIPTION_BYKEY + "/" + key);
                 }
             }
         }
@@ -90,9 +95,15 @@ namespace SubscriptionApp.Client.Services
                 {
                     return wc.DownloadString(Endpoint + GET_SUBSCRIPTION_BYAPPLICATIONID + "/" + applicationId);
                 }
-                catch (Exception ex)
+                catch (WebException ex)
                 {
-                    return string.Empty;
+                    var webResponse = (HttpWebResponse)ex.Response;
+                    if (webResponse.StatusCode == HttpStatusCode.NotFound)
+                    {
+                        return string.Empty;
+                    }
+
+                    return wc.DownloadString(Endpoint + GET_SUBSCRIPTION_BYAPPLICATIONID + "/" + applicationId);
                 }
             }
         }
@@ -107,9 +118,9 @@ namespace SubscriptionApp.Client.Services
                 {
                     return wc.UploadString(Endpoint + CREATE_SUBSCRIPTION, "POST", JsonConvert.SerializeObject(model));
                 }
-                catch (Exception ex)
+                catch (WebException ex)
                 {
-                    return string.Empty;
+                    return wc.UploadString(Endpoint + CREATE_SUBSCRIPTION, "POST", JsonConvert.SerializeObject(model));
                 }
             }
         }
@@ -124,9 +135,9 @@ namespace SubscriptionApp.Client.Services
                 {
                     return wc.UploadString(Endpoint + UPDATE_SUBSCRIPTION, "PUT", JsonConvert.SerializeObject(model));
                 }
-                catch (Exception ex)
+                catch (WebException ex)
                 {
-                    return string.Empty;
+                    return wc.UploadString(Endpoint + UPDATE_SUBSCRIPTION, "PUT", JsonConvert.SerializeObject(model));
                 }
             }
         }

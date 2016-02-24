@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using Moq;
 using NUnit.Framework;
+using NUnit.Framework.Constraints;
 using SubscriptionApp.Client.Models;
 using SubscriptionApp.Client.Redis;
 using SubscriptionApp.Client.Services;
@@ -143,15 +145,11 @@ namespace SubscriptionApp.Client.Test
         {
             _mockService.Setup(x => x.GetConfiguration()).Returns(string.Empty);
             _mockService.Setup(x => x.CreateSubscription(It.IsAny<SubscriberModel>())).Returns(SUSBCRIBER_JSON);
-            _client = new SubscriptionClient(_mockService.Object).UseRedis("localhost");
-            try
-            {
-                _client.CreateSubscription(1,"uniqueAppId","name");
-            }
-            catch (Exception ex)
-            {
-                Assert.AreEqual("Missing configuration or subscription types, no subscription types found", ex.Message);
-            }
+            _client = new SubscriptionClient(_mockService.Object);
+            new Cache().Remove("subscrio_configuraion");
+            var ex = Assert.Throws<Exception>(() => _client.CreateSubscription(1, "uniqueAppId", "name"));
+            Assert.NotNull(ex);
+            Assert.AreEqual("Missing configuration or subscription types, no subscription types found", ex.Message);
         }
 
         [Test]
@@ -159,14 +157,9 @@ namespace SubscriptionApp.Client.Test
         {
             _mockService.Setup(x => x.CreateSubscription(It.IsAny<SubscriberModel>())).Returns(SUSBCRIBER_JSON);
             var badClient = new SubscriptionClient(_mockService.Object).UseRedis("localhost");
-            try
-            {
-                badClient.CreateSubscription(100, "uniqueAppId", "name");
-            }
-            catch (Exception ex)
-            {
-                Assert.AreEqual("Subscription type with id of: 100 was not found", ex.Message);
-            }
+            var ex = Assert.Throws<Exception>(() => badClient.CreateSubscription(100, "uniqueAppId", "name"));
+            Assert.NotNull(ex);
+            Assert.AreEqual("Subscription type with id of: 100 was not found", ex.Message);
         }
 
         [Test]
@@ -175,14 +168,9 @@ namespace SubscriptionApp.Client.Test
             _mockService.Setup(x => x.GetSubscriptions()).Returns(SUSBCRIBERS_JSON);
             _mockService.Setup(x => x.UpdateSubscription(It.IsAny<SubscriberModel>())).Returns(SUSBCRIBER_JSON);
             _client = new SubscriptionClient(_mockService.Object).UseRedis("localhost");
-            try
-            {
-                _client.UpdateSubscription((new TestFeatures(new Dictionary<string, object> { { "Key", "asdlfhasdklfahsdl" } })));
-            }
-            catch (Exception ex)
-            {
-                Assert.AreEqual("Cannot update subscription, original subscription not found", ex.Message);
-            }
+            var ex = Assert.Throws<Exception>(() => _client.UpdateSubscription((new TestFeatures(new Dictionary<string, object> { { "Key", "asdlfhasdklfahsdl" } }))));
+            Assert.NotNull(ex);
+            Assert.AreEqual("Cannot update subscription, original subscription not found", ex.Message);
         }
 
         [Test]
@@ -192,9 +180,17 @@ namespace SubscriptionApp.Client.Test
             _client = new SubscriptionClient(_mockService.Object).UseRedis("localhost");
             _client.SubscriptionUpdated(new SubscriberModel {ApplicationId = "1234", Key = "5678"});
             _client.WebhookUpdate(new SubscriberWebhookModel {Action = "updateall"});
-            System.Threading.Thread.Sleep(1000);
+            System.Threading.Thread.Sleep(2000);
             var result = _client.GetSubscriptionByKey("5678");
             Assert.IsNull(result);
+        }
+
+        [Test]
+        public void ShouldThrowException()
+        {
+            _client = new SubscriptionClient("","");
+            var ex = Assert.Throws<WebException>(() => _client.GetSubscriptions());
+            Assert.NotNull(ex);
         }
     }
 
