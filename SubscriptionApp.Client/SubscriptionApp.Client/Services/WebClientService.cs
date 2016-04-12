@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Net;
+using System.Text;
+using System.Web;
 using Newtonsoft.Json;
 using SubscriptionApp.Client.Models;
 
@@ -31,7 +33,7 @@ namespace SubscriptionApp.Client.Services
 
         public virtual string GetSubscriptions()
         {
-            using (var wc = new WebClient())
+            using (var wc = new WebClient { Encoding = Encoding.UTF8 })
             {
                 wc.Headers[HttpRequestHeader.ContentType] = "application/json";
                 wc.Headers[HttpRequestHeader.Authorization] = AuthToken;
@@ -48,7 +50,7 @@ namespace SubscriptionApp.Client.Services
 
         public virtual string GetConfiguration()
         {
-            using (var wc = new WebClient())
+            using (var wc = new WebClient { Encoding = Encoding.UTF8 })
             {
                 wc.Headers[HttpRequestHeader.ContentType] = "application/json";
                 wc.Headers[HttpRequestHeader.Authorization] = AuthToken;
@@ -65,7 +67,7 @@ namespace SubscriptionApp.Client.Services
 
         public virtual string GetSubscriptionByKey(string key)
         {
-            using (var wc = new WebClient())
+            using (var wc = new WebClient { Encoding = Encoding.UTF8 })
             {
                 wc.Headers[HttpRequestHeader.ContentType] = "application/json";
                 wc.Headers[HttpRequestHeader.Authorization] = AuthToken;
@@ -87,7 +89,7 @@ namespace SubscriptionApp.Client.Services
 
         public virtual string GetSubscriptionByApplicationId(string applicationId)
         {
-            using (var wc = new WebClient())
+            using (var wc = new WebClient { Encoding = Encoding.UTF8 })
             {
                 wc.Headers[HttpRequestHeader.ContentType] = "application/json";
                 wc.Headers[HttpRequestHeader.Authorization] = AuthToken;
@@ -110,7 +112,7 @@ namespace SubscriptionApp.Client.Services
 
         public virtual string CreateSubscription(SubscriberModel model)
         {
-            using (var wc = new WebClient())
+            using (var wc = new WebClient { Encoding = Encoding.UTF8 })
             {
                 wc.Headers[HttpRequestHeader.ContentType] = "application/json";
                 wc.Headers[HttpRequestHeader.Authorization] = AuthToken;
@@ -127,7 +129,7 @@ namespace SubscriptionApp.Client.Services
 
         public virtual string UpdateSubscription(SubscriberModel model)
         {
-            using (var wc = new WebClient())
+            using (var wc = new WebClient { Encoding = Encoding.UTF8 })
             {
                 wc.Headers[HttpRequestHeader.ContentType] = "application/json";
                 wc.Headers[HttpRequestHeader.Authorization] = AuthToken;
