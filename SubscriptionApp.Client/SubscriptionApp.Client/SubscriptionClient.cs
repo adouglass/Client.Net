@@ -9,7 +9,7 @@ namespace SubscriptionApp.Client
 {
     public class SubscriptionClient
     {
-        public readonly string VersionNumber;
+        public readonly string VersionNumber = SubscriptionAppModel.Version;
 
         private readonly WebClientService _webClientService;
 
@@ -35,7 +35,6 @@ namespace SubscriptionApp.Client
         {
             _webClientService = webClientService;
             _cache = new Cache();
-            VersionNumber = SubscriptionAppModel.Version;
         }
 
 
