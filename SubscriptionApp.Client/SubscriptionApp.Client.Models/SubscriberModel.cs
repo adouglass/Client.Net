@@ -10,6 +10,7 @@ namespace SubscriptionApp.Client.Models
             Features = new List<FeatureModel>();
         }
         public long Id { get; set; }
+        public string Version { get; set; }
         public long SubscriptionTypeId { get; set; }
         public int BillingSystemType { get; set; }
         public string BillingSystemIdentifier { get; set; }

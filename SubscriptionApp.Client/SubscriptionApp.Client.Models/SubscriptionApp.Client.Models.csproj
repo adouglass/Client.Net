@@ -52,6 +52,7 @@
     <Compile Include="SubscriberModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SubscriberWebhookModel.cs" />
+    <Compile Include="SubscriptionAppModel.cs" />
     <Compile Include="SubscriptionTypeModel.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -9,6 +9,8 @@ namespace SubscriptionApp.Client
 {
     public class SubscriptionClient
     {
+        public readonly string VersionNumber;
+
         private readonly WebClientService _webClientService;
 
         public IStorageMethod StorageMethod
@@ -33,6 +35,7 @@ namespace SubscriptionApp.Client
         {
             _webClientService = webClientService;
             _cache = new Cache();
+            VersionNumber = SubscriptionAppModel.Version;
         }
 
 
@@ -40,10 +43,10 @@ namespace SubscriptionApp.Client
         {
             var subscriber = _cache.Get(_cacheKey + key) as SubscriberModel;
 
-            if (subscriber != null) return subscriber.ToDynamic();
+            if (subscriber != null && subscriber.Version == VersionNumber) return subscriber.ToDynamic();
 
             subscriber = StorageMethod.GetByKey(key);
-            if (subscriber != null)
+            if (subscriber != null && subscriber.Version == VersionNumber)
             {
                 _cache.Add(_cacheKey + key, subscriber, MyCachePriority.Default);
                 return subscriber.ToDynamic();
@@ -67,7 +70,7 @@ namespace SubscriptionApp.Client
         {
             var subscribers = StorageMethod.GetAllSubscriptions();
 
-            if (subscribers != null) return subscribers.ToDynamics();
+            if (subscribers != null && subscribers.All(x => x.Version == VersionNumber)) return subscribers.ToDynamics();
 
             subscribers = JsonConvert.DeserializeObject<List<SubscriberModel>>(_webClientService.GetSubscriptions());
             if (subscribers == null) return null;
@@ -84,10 +87,10 @@ namespace SubscriptionApp.Client
         private dynamic GetSubscriberModelByKey(string key)
         {
             var subscriber = _cache.Get(_cacheKey + key) as SubscriberModel;
-            if (subscriber != null) return subscriber;
+            if (subscriber != null && subscriber.Version == VersionNumber) return subscriber;
 
             subscriber = StorageMethod.GetByKey(key);
-            if (subscriber != null)
+            if (subscriber != null && subscriber.Version == VersionNumber)
             {
                 _cache.Add(_cacheKey + key, subscriber, MyCachePriority.Default);
                 return subscriber.ToDynamic();
@@ -106,10 +109,10 @@ namespace SubscriptionApp.Client
         {
             var subscriber = _cache.Get(_cacheAppId + applicationId) as SubscriberModel;
 
-            if (subscriber != null) return subscriber.ToDynamic();
+            if (subscriber != null && subscriber.Version == VersionNumber) return subscriber.ToDynamic();
 
             subscriber = StorageMethod.GetByApplicationId(applicationId);
-            if (subscriber != null)
+            if (subscriber != null && subscriber.Version == VersionNumber)
             {
                 _cache.Add(_cacheAppId + applicationId, subscriber, MyCachePriority.Default);
                 return subscriber.ToDynamic();
@@ -153,6 +156,8 @@ namespace SubscriptionApp.Client
                 DefaultRevertOnExpiration = subscriptionType.DefaultRevertOnExpiration,
                 DefaultRevertTo = subscriptionType.DefaultRevertTo,
                 Name = name,
+                Version = VersionNumber,
+                IsActive = true,
                 SubscriptionTypeId = subscriptionType.Id,
                 Features = subscriptionType.Features,
                 ExpirationDate = DateTime.UtcNow.AddTicks(subscriptionType.TimeToExpireTicks.GetValueOrDefault())
@@ -180,6 +185,7 @@ namespace SubscriptionApp.Client
         {
             var originalSubscriber = GetSubscriberModelByKey(subscriber.Key);
             var model = Extensions.AsSubscriberModel(subscriber, originalSubscriber);
+            model.Version = VersionNumber;
             var result = _webClientService.UpdateSubscription(model);
             SubscriberModel updatedSubscriber = JsonConvert.DeserializeObject<SubscriberModel>(result);
             if (updatedSubscriber != null)
@@ -205,6 +211,7 @@ namespace SubscriptionApp.Client
         {
             var originalSubscriber = GetSubscriberModelByKey(subscriber.Key);
             var model = Extensions.AsSubscriberModel(subscriber, originalSubscriber);
+            model.Version = VersionNumber;
             StorageMethod.AddOrUpdateSubscriber(model);
 
             _cache.Remove(_cacheKey + model.Key);
@@ -375,7 +382,6 @@ namespace SubscriptionApp.Client
                     }
                 }
             }
-            
             return subscriber;
         }
 
