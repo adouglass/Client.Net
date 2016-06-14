@@ -23,6 +23,7 @@ namespace SubscriptionApp.Client.Models
         public bool DefaultNeverExpire { get; set; }
         public int DefaultGracePeriod { get; set; }
         public bool DefaultResetFeaturesOnRenewal { get; set; }
+        public bool IsActive { get; set; }
         public List<FeatureModel> Features { get; set; }
     }
 

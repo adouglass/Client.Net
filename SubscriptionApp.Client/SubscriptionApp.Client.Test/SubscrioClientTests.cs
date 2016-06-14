@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Runtime.InteropServices;
 using Moq;
 using NUnit.Framework;
 using NUnit.Framework.Constraints;
@@ -11,7 +12,7 @@ using SubscriptionApp.Client.Services;
 namespace SubscriptionApp.Client.Test
 {
     [TestFixture]
-    public class SusbcrioClientTests
+    public class SubscrioClientTests
     {
         private Mock<WebClientService> _mockService;
         private SubscriptionClient _client;
@@ -36,14 +37,14 @@ namespace SubscriptionApp.Client.Test
             _mockService.Setup(x => x.GetSubscriptionByKey(It.IsAny<string>())).Returns(string.Empty);
             _mockService.Setup(x => x.GetSubscriptionByApplicationId(It.IsAny<string>())).Returns(string.Empty);
             _mockService.Setup(x => x.GetConfiguration()).Returns(CONFIGURATION_JSON);
-            _client = new SubscriptionClient(_mockService.Object).UseRedis("localhost");
+            _client = new SubscriptionClient(_mockService.Object);
         }
 
         [Test]
         public void ShouldCreatePropertiesBasedUponFeatures()
         {
             _mockService.Setup(x => x.GetSubscriptionByKey(It.IsAny<string>())).Returns(SUSBCRIBER_JSON);
-            _client = new SubscriptionClient(_mockService.Object).UseRedis("localhost");
+            _client = new SubscriptionClient(_mockService.Object);
             var result = _client.GetSubscriptionByKey("Tuttle");
             Assert.AreEqual(true, result.RoutingEnabled);
             Assert.AreEqual(44.44m, result.DailyRate);
@@ -61,7 +62,7 @@ namespace SubscriptionApp.Client.Test
         public void ShouldCreatePropertiesBasedUponFeaturesForStronglyTypedModel()
         {
             _mockService.Setup(x => x.GetSubscriptionByKey(It.IsAny<string>())).Returns(SUSBCRIBER_JSON);
-            _client = new SubscriptionClient(_mockService.Object).UseRedis("localhost");
+            _client = new SubscriptionClient(_mockService.Object);
             var result = _client.GetSubscriptionByKey<TestClass>("Tuttle");
             Assert.AreEqual(true, result.RoutingEnabled);
             Assert.AreEqual(44.44m, result.DailyRate);
@@ -79,7 +80,7 @@ namespace SubscriptionApp.Client.Test
         public void ShouldUpdateLocalModelForStronglyTypedModelOrDynamic()
         {
             _mockService.Setup(x => x.GetSubscriptionByKey(It.IsAny<string>())).Returns(SUSBCRIBER_JSON);
-            _client = new SubscriptionClient(_mockService.Object).UseRedis("localhost");
+            _client = new SubscriptionClient(_mockService.Object);
             var result = _client.GetSubscriptionByKey<TestClass>("Tuttle");
             result.PlanName = "Steeeeeeeve";
             _client.UpdateLocalSubscription(result);
@@ -97,7 +98,7 @@ namespace SubscriptionApp.Client.Test
         public void ShouldReturnNullForFeaturesThatAreNull()
         {
             _mockService.Setup(x => x.GetSubscriptionByKey(It.IsAny<string>())).Returns(SUSBCRIBER_JSON_NULL);
-            _client = new SubscriptionClient(_mockService.Object).UseRedis("localhost");
+            _client = new SubscriptionClient(_mockService.Object);
             var result = _client.GetSubscriptionByKey("TuttleNull");
             Assert.IsNull(result.RoutingEnabled);
             Assert.IsNull(result.DailyRate);
@@ -113,7 +114,7 @@ namespace SubscriptionApp.Client.Test
         public void ShouldCreateSubscriber()
         {
             _mockService.Setup(x => x.CreateSubscription(It.IsAny<SubscriberModel>())).Returns(SUSBCRIBER_JSON);
-            _client = new SubscriptionClient(_mockService.Object).UseRedis("localhost");
+            _client = new SubscriptionClient(_mockService.Object);
             var result = _client.CreateSubscription(1,"uniqueAppId","name");
             Assert.AreEqual(true, result.RoutingEnabled);
             Assert.AreEqual(44.44m, result.DailyRate);
@@ -129,7 +130,7 @@ namespace SubscriptionApp.Client.Test
         {
             _mockService.Setup(x => x.GetSubscriptions()).Returns(SUSBCRIBERS_JSON);
             _mockService.Setup(x => x.UpdateSubscription(It.IsAny<SubscriberModel>())).Returns(SUSBCRIBER_JSON);
-            _client = new SubscriptionClient(_mockService.Object).UseRedis("localhost");
+            _client = new SubscriptionClient(_mockService.Object);
             var result = _client.UpdateSubscription(new TestFeatures (new Dictionary<string, object> { {"Key", "Tuttle"} }));
             Assert.AreEqual(true, result.RoutingEnabled);
             Assert.AreEqual(44.44m, result.DailyRate);
@@ -156,7 +157,7 @@ namespace SubscriptionApp.Client.Test
         public void ShouldThrowSpecificExceptionOnCreateSubscriber()
         {
             _mockService.Setup(x => x.CreateSubscription(It.IsAny<SubscriberModel>())).Returns(SUSBCRIBER_JSON);
-            var badClient = new SubscriptionClient(_mockService.Object).UseRedis("localhost");
+            var badClient = new SubscriptionClient(_mockService.Object);
             var ex = Assert.Throws<Exception>(() => badClient.CreateSubscription(100, "uniqueAppId", "name"));
             Assert.NotNull(ex);
             Assert.AreEqual("Subscription type with id of: 100 was not found", ex.Message);
@@ -167,7 +168,7 @@ namespace SubscriptionApp.Client.Test
         {
             _mockService.Setup(x => x.GetSubscriptions()).Returns(SUSBCRIBERS_JSON);
             _mockService.Setup(x => x.UpdateSubscription(It.IsAny<SubscriberModel>())).Returns(SUSBCRIBER_JSON);
-            _client = new SubscriptionClient(_mockService.Object).UseRedis("localhost");
+            _client = new SubscriptionClient(_mockService.Object);
             var ex = Assert.Throws<Exception>(() => _client.UpdateSubscription((new TestFeatures(new Dictionary<string, object> { { "Key", "asdlfhasdklfahsdl" } }))));
             Assert.NotNull(ex);
             Assert.AreEqual("Cannot update subscription, original subscription not found", ex.Message);
@@ -177,7 +178,7 @@ namespace SubscriptionApp.Client.Test
         public void ShouldRemoveSubscribersOnUpdateAll()
         {
             _mockService.Setup(x => x.GetSubscriptions()).Returns(SUSBCRIBERS_JSON);
-            _client = new SubscriptionClient(_mockService.Object).UseRedis("localhost");
+            _client = new SubscriptionClient(_mockService.Object);
             _client.SubscriptionUpdated(new SubscriberModel {ApplicationId = "1234", Key = "5678"});
             _client.WebhookUpdate(new SubscriberWebhookModel {Action = "updateall"});
             System.Threading.Thread.Sleep(2000);
@@ -191,6 +192,17 @@ namespace SubscriptionApp.Client.Test
             _client = new SubscriptionClient("","");
             var ex = Assert.Throws<WebException>(() => _client.GetSubscriptions());
             Assert.NotNull(ex);
+        }
+
+        [TestCase(false, true, 5, false)]
+        [TestCase(true, false, -5, false)]
+        [TestCase(true, true, -5, true)]
+        public void ShouldCorrectlyResolveIsActive(bool isActive, bool neverExpire, int days, bool result)
+        {
+            var model = new SubscriberModel {IsActive = isActive, DefaultNeverExpire = neverExpire, ExpirationDate = DateTime.UtcNow.AddDays(days)};
+            var clientContent = model.ToDynamic();
+            Assert.AreEqual(clientContent.IsAlive, result);
+
         }
     }
 

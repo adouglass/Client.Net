@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Newtonsoft.Json;
 using SubscriptionApp.Client.Models;
 using SubscriptionApp.Client.Services;
@@ -322,6 +321,7 @@ namespace SubscriptionApp.Client
             dic.Add("BillingSystemIdentifier", subscriber.BillingSystemIdentifier);
             dic.Add("BillingSystemType", subscriber.BillingSystemType);
             dic.Add("IsExpired", !subscriber.DefaultNeverExpire && (subscriber.ExpirationDate.AddDays(subscriber.DefaultGracePeriod) < DateTime.UtcNow));
+            dic.Add("IsAlive", subscriber.IsActive && ((subscriber.ExpirationDate.AddDays(subscriber.DefaultGracePeriod) > DateTime.UtcNow) || subscriber.DefaultNeverExpire));
             return new DynamicDictionary(dic);
         }
 

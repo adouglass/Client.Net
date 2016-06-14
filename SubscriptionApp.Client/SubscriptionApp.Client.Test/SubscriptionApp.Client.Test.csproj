@@ -80,7 +80,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="RedisStorageTests.cs" />
-    <Compile Include="SusbcrioClientTests.cs" />
+    <Compile Include="SubscrioClientTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

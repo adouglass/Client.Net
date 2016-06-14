@@ -82,5 +82,9 @@ namespace SubscriptionApp.Client
         {
             get { return (dictionary["IsExpired"] as bool?).GetValueOrDefault(); }
         }
+        public bool IsAlive
+        {
+            get { return (dictionary["IsAlive"] as bool?).GetValueOrDefault(); }
+        }
     }
 }
