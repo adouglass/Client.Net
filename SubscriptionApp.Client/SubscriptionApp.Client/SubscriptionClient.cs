@@ -24,6 +24,7 @@ namespace SubscriptionApp.Client
         private readonly string _cacheKey = "subscriber_key_";
         private readonly string _cacheAppId = "subscriber_appid_";
         private readonly string _configCacheKey = "subscrio_configuraion";
+        private readonly string _allSubscribersCacheKey = "subscrio_all_subscribers";
 
         public SubscriptionClient(string endpoint, string authorizationToken)
         {
@@ -67,6 +68,9 @@ namespace SubscriptionApp.Client
 
         public List<dynamic> GetSubscriptions()
         {
+            var cachedSubscribers = _cache.Get(_allSubscribersCacheKey);
+            if (cachedSubscribers != null) return cachedSubscribers.As<List<dynamic>>();
+
             var subscribers = StorageMethod.GetAllSubscriptions();
 
             if (subscribers != null && subscribers.All(x => x.Version == VersionNumber)) return subscribers.ToDynamics();
@@ -75,12 +79,21 @@ namespace SubscriptionApp.Client
             if (subscribers == null) return null;
             StorageMethod.AddOrUpdateSubscribers(subscribers);
         
-            return subscribers.ToDynamics();
+            var all =  subscribers.ToDynamics();
+            _cache.Add(_allSubscribersCacheKey, all, MyCachePriority.Default);
+
+            return all;
         }
 
         public List<T> GetSubscriptions<T>() where T : ISubscriber
         {
-            return GetSubscriptions().Select(x => (x as DynamicDictionary).As<T>()).ToList();
+            var cachedSubscribers = _cache.Get(_allSubscribersCacheKey);
+            if (cachedSubscribers != null) return cachedSubscribers.As<List<T>>();
+
+            var all = GetSubscriptions().Select(x => (x as DynamicDictionary).As<T>()).ToList();
+            _cache.Add(_allSubscribersCacheKey, all, MyCachePriority.Default);
+
+            return all;
         }
 
         private dynamic GetSubscriberModelByKey(string key)
