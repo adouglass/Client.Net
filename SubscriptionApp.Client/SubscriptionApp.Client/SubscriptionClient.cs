@@ -68,12 +68,17 @@ namespace SubscriptionApp.Client
 
         public List<dynamic> GetSubscriptions()
         {
-            var cachedSubscribers = _cache.Get(_allSubscribersCacheKey);
-            if (cachedSubscribers != null) return cachedSubscribers.As<List<dynamic>>();
+            var cachedSubscribers = _cache.Get(_allSubscribersCacheKey) as List<dynamic>;
+            if (cachedSubscribers != null) return cachedSubscribers;
 
             var subscribers = StorageMethod.GetAllSubscriptions();
 
-            if (subscribers != null && subscribers.All(x => x.Version == VersionNumber)) return subscribers.ToDynamics();
+            if (subscribers != null && subscribers.All(x => x.Version == VersionNumber))
+            {
+                var subscribersFromStroage = subscribers.ToDynamics();
+                _cache.Add(_allSubscribersCacheKey, subscribersFromStroage, MyCachePriority.Default);
+                return subscribersFromStroage;
+            }
 
             subscribers = JsonConvert.DeserializeObject<List<SubscriberModel>>(_webClientService.GetSubscriptions());
             if (subscribers == null) return null;
@@ -87,8 +92,8 @@ namespace SubscriptionApp.Client
 
         public List<T> GetSubscriptions<T>() where T : ISubscriber
         {
-            var cachedSubscribers = _cache.Get(_allSubscribersCacheKey);
-            if (cachedSubscribers != null) return cachedSubscribers.As<List<T>>();
+            var cachedSubscribers = _cache.Get(_allSubscribersCacheKey) as List<T>;
+            if (cachedSubscribers != null) return cachedSubscribers;
 
             var all = GetSubscriptions().Select(x => (x as DynamicDictionary).As<T>()).ToList();
             _cache.Add(_allSubscribersCacheKey, all, MyCachePriority.Default);
