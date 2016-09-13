@@ -143,7 +143,7 @@ namespace SubscriptionApp.Client
             return subscriber.ToDynamic();
         }
 
-        public T GetSubscriptionByApplicationId<T>(string applicationId) where T : IStorageMethod
+        public T GetSubscriptionByApplicationId<T>(string applicationId) where T : ISubscriber
         {
             return (GetSubscriptionByApplicationId(applicationId) as DynamicDictionary).As<T>();
         }
@@ -190,7 +190,7 @@ namespace SubscriptionApp.Client
         }
 
         public T CreateSubscription<T>(int subscriptionTypeId, string applicationIdentifier, string name = null,
-            int? billingSystemType = null, string billingSystemIdentifier = null) where T : IStorageMethod
+            int? billingSystemType = null, string billingSystemIdentifier = null) where T : ISubscriber
         {
             return (CreateSubscription(subscriptionTypeId,applicationIdentifier,name,billingSystemType,billingSystemIdentifier) as DynamicDictionary).As<T>();
         }
