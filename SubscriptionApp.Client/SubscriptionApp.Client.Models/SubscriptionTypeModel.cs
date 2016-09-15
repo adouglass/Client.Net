@@ -7,6 +7,7 @@ namespace SubscriptionApp.Client.Models
         public SubscriptionTypeModel()
         {
             Features = new List<FeatureModel>();
+            BillingSystemLinks = new List<BillingSystemLink>();
         }
         public int Id { get; set; }
         public string Key { get; set; }
@@ -21,5 +22,12 @@ namespace SubscriptionApp.Client.Models
         public int DefaultGracePeriod { get; set; }
         public bool DefaultResetFeaturesOnRenewal { get; set; }
         public List<FeatureModel> Features { get; set; }
+        public List<BillingSystemLink> BillingSystemLinks { get; set; }
+    }
+
+    public class BillingSystemLink
+    {
+        public int BillingSystemType { get; set; }
+        public string Link { get; set; }
     }
 }
