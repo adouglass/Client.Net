@@ -26,10 +26,10 @@ namespace SubscriptionApp.Client
         private readonly string _configCacheKey = "subscrio_configuraion";
         private readonly string _allSubscribersCacheKey = "subscrio_all_subscribers";
 
-        public SubscriptionClient(string endpoint, string authorizationToken)
+        public SubscriptionClient(string endpoint, string authorizationToken, int cacheTimeoutInSeconds = 300)
         {
             _webClientService = new WebClientService(endpoint, authorizationToken);
-            _cache = new Cache();
+            _cache = new Cache(cacheTimeoutInSeconds);
         }
 
         public SubscriptionClient(WebClientService webClientService)
