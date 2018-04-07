@@ -1,13 +1,11 @@
-﻿using System;
-using System.Net;
+﻿using System.Net;
 using System.Text;
-using System.Web;
 using Newtonsoft.Json;
 using SubscriptionApp.Client.Models;
 
 namespace SubscriptionApp.Client.Services
 {
-    public class WebClientService
+	public class WebClientService
     {
 
         public WebClientService(string endpoint, string authorizationToken)

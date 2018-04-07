@@ -221,7 +221,9 @@ namespace SubscriptionApp.Client
 
         public T UpdateSusbcription<T>(T subscriber) where T : ISubscriber
         {
-            return (UpdateSubscription(subscriber) as DynamicDictionary).As<T>();
+			var retVal = UpdateSubscription(subscriber);
+
+			return (retVal as DynamicDictionary).As<T>();
         }
 
         public void UpdateLocalSubscription<T>(T subscriber) where T: ISubscriber
@@ -388,7 +390,7 @@ namespace SubscriptionApp.Client
                     {
                         var feature = subscriber.Features.FirstOrDefault(x => x.PropertyName == property.Name);
                         if (feature == null) continue;
-                        feature.Value = property.GetValue(dynamic).ToString();
+                        feature.Value = property.GetValue(dynamic)?.ToString();
                     }
                     else
                     {
