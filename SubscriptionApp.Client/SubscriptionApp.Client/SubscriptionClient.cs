@@ -371,7 +371,7 @@ namespace SubscriptionApp.Client
                     {
                         var feature = subscriber.Features.FirstOrDefault(x => x.PropertyName == property);
                         if (feature == null) continue;
-                        feature.Value = castedDynamic.GetMemberValue(feature.PropertyName).ToString();
+                        feature.Value = castedDynamic.GetMemberValue(feature.PropertyName)?.ToString();
                     }
                     else
                     {
